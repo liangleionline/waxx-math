@@ -3,6 +3,11 @@
 # 依赖：JDK + Android SDK commandline-tools / platforms;android-33 / build-tools;34.0.0
 set -euo pipefail
 
+# JDK：优先使用显式 JAVA_HOME，否则默认 $HOME/jdk17
+export JAVA_HOME="${JAVA_HOME:-$HOME/jdk17}"
+export PATH="$JAVA_HOME/bin:$PATH"
+"$JAVA_HOME/bin/javac" -version >/dev/null 2>&1 || { echo "JDK not found at $JAVA_HOME"; exit 1; }
+
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 APP="$ROOT/app"
 BUILD="$ROOT/build"
@@ -19,12 +24,12 @@ D8="$BT/d8"
 ZIPALIGN="$BT/zipalign"
 APKSIGNER="$BT/apksigner"
 
-KEYSTORE="$BUILD/keystore.jks"
+KEYSTORE="$ROOT/keystore/waxx-keystore.jks"
 KS_PASS="waxx2026"
 ALIAS="waxx"
 
 echo "==> clean"
-rm -rf "$BUILD"; mkdir -p "$GEN" "$CLASSES" "$DEX"
+rm -rf "$BUILD"; mkdir -p "$GEN" "$CLASSES" "$DEX" "$ROOT/keystore"
 
 echo "==> aapt: package resources"
 "$AAPT" package -f -m \
@@ -51,7 +56,7 @@ echo "==> d8"
 
 echo "==> add classes.dex"
 cp "$DEX/classes.dex" "$BUILD/classes.dex"
-"$AAPT" add "$BUILD/app.unsigned.apk" "$BUILD/classes.dex"
+(cd "$BUILD" && "$AAPT" add app.unsigned.apk classes.dex)
 
 echo "==> zipalign"
 "$ZIPALIGN" -f 4 "$BUILD/app.unsigned.apk" "$BUILD/app.aligned.apk"
