@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">数学出题器</string>
+    <string name="range_title">到 的运算？</string>
+    <string name="range_hint_start">范围起</string>
+    <string name="range_hint_end">范围止</string>
+    <string name="range_to">到</string>
+    <string name="add_label">道加法</string>
+    <string name="sub_label">道减法</string>
+    <string name="mul_label">道乘法</string>
+    <string name="div_label">道除法</string>
+    <string name="format_title">题目形式</string>
+    <string name="format_horizontal">横式</string>
+    <string name="format_vertical">竖式</string>
+    <string name="next">生成题目</string>
+    <string name="toast_over_40">题目总数不得超过40</string>
+    <string name="duplicate_title">一式两份</string>
+    <string name="duplicate_msg">是否在纸张下半部分再生成一份相同题目？</string>
+    <string name="yes">是</string>
+    <string name="no">否</string>
+    <string name="permission_title">需要存储权限</string>
+    <string name="permission_msg_legacy">需要存储权限才能将 PDF 保存到手机根目录 waxx 文件夹</string>
+    <string name="permission_msg_allfiles">需要“所有文件访问”权限才能保存到手机根目录 waxx 文件夹</string>
+    <string name="goto_settings">去设置</string>
+    <string name="open_settings">打开系统设置</string>
+    <string name="permission_denied">未获得权限，无法保存PDF</string>
+    <string name="generate_fail">生成失败：</string>
+    <string name="generate_ok">已生成</string>
+    <string name="no_question">请至少设置一道题目</string>
+</resources>
