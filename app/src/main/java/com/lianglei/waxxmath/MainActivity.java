@@ -13,6 +13,7 @@ import android.os.Environment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -59,8 +60,14 @@ public class MainActivity extends android.app.Activity {
         btnGenerate = findViewById(R.id.btnGenerate);
 
         chipGrade.setOnClickListener(v -> showGradePicker());
-        chipHorizontal.setOnClickListener(v -> { hSelected = !hSelected; applyFormat(); });
-        chipVertical.setOnClickListener(v -> { vSelected = !vSelected; applyFormat(); });
+        chipHorizontal.setOnClickListener(v -> {
+            if (hSelected && !vSelected) { toastNeedOne(); return; }
+            hSelected = !hSelected; applyFormat();
+        });
+        chipVertical.setOnClickListener(v -> {
+            if (vSelected && !hSelected) { toastNeedOne(); return; }
+            vSelected = !vSelected; applyFormat();
+        });
         btnGenerate.setOnClickListener(v -> onGenerate());
 
         applyGradeLabel();
@@ -142,6 +149,8 @@ public class MainActivity extends android.app.Activity {
             View plus = card.findViewById(R.id.btnPlus);
             minus.setOnClickListener(v -> changeCount(t, -1, tvCount));
             plus.setOnClickListener(v -> changeCount(t, +1, tvCount));
+            tvCount.setOnClickListener(v -> showCountDialog(t, tvCount));
+            tvCount.setClickable(true);
             topicList.addView(card);
         }
     }
@@ -158,6 +167,37 @@ public class MainActivity extends android.app.Activity {
         counts.put(t, next);
         tvCount.setText(String.valueOf(next));
         refreshBottom();
+    }
+
+    private void showCountDialog(TopicCatalog.Topic t, TextView tvCount) {
+        int cur = counts.getOrDefault(t, 0);
+        final EditText et = new EditText(this);
+        et.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
+        et.setText(String.valueOf(cur));
+        et.setSelection(et.getText().length());
+        int pad = (int) (20 * getResources().getDisplayMetrics().density);
+        et.setPadding(pad, pad, pad, pad);
+        new AlertDialog.Builder(this)
+                .setTitle(t.title)
+                .setMessage("输入本题数量（合计最多 " + MAX_TOTAL + " 题）")
+                .setView(et)
+                .setPositiveButton("确定", (d, w) -> {
+                    int v;
+                    try { v = Integer.parseInt(et.getText().toString().trim()); }
+                    catch (Exception e) { v = 0; }
+                    if (v < 0) v = 0;
+                    int other = totalCount() - cur;
+                    if (other + v > MAX_TOTAL) {
+                        v = MAX_TOTAL - other;
+                        if (v < 0) v = 0;
+                        Toast.makeText(this, R.string.toast_over_40, Toast.LENGTH_SHORT).show();
+                    }
+                    counts.put(t, v);
+                    tvCount.setText(String.valueOf(v));
+                    refreshBottom();
+                })
+                .setNegativeButton("取消", null)
+                .show();
     }
 
     private int totalCount() {
@@ -178,6 +218,10 @@ public class MainActivity extends android.app.Activity {
         chipHorizontal.setTextColor(getColor(hSelected ? R.color.chip_selected_text : R.color.chip_unselected_text));
         chipVertical.setBackgroundResource(vSelected ? R.drawable.bg_chip_selected : R.drawable.bg_chip_unselected);
         chipVertical.setTextColor(getColor(vSelected ? R.color.chip_selected_text : R.color.chip_unselected_text));
+    }
+
+    private void toastNeedOne() {
+        Toast.makeText(this, "横式和竖式至少选一个", Toast.LENGTH_SHORT).show();
     }
 
     // ---------- 生成 ----------
