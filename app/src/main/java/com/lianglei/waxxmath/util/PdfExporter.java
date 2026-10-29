@@ -108,14 +108,20 @@ public class PdfExporter {
         float anchorY = top + cellH * 0.25f;
         float centerX = left + cellW / 2f;
 
-        if (q.format == Question.Format.HORIZONTAL) {
-            String s = q.horizontal();
+        if (!q.vertical) {
+            String s = q.expr;
+            // 横式较长时自动缩小字号
+            float size = textPaint.getTextSize();
+            if (textPaint.measureText(s) > cellW * 0.92f) {
+                textPaint.setTextSize(size * (cellW * 0.92f / textPaint.measureText(s)));
+            }
             float w = textPaint.measureText(s);
             canvas.drawText(s, centerX - w / 2f, anchorY, textPaint);
+            textPaint.setTextSize(size);
         } else {
             // 竖式：两行 + 下划线，整体垂直居中于 1/4 高度附近
-            String topS = q.verticalTop();
-            String botS = q.verticalBottom();
+            String topS = q.vTop;
+            String botS = q.vBottom;
             float lh = textPaint.getFontSpacing();
             float blockH = lh * 2f + 10f;
             float blockTop = anchorY - blockH / 2f;

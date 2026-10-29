@@ -1,405 +1,144 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/bg"
-    android:fillViewport="true"
-    android:scrollbars="none">
+    android:orientation="vertical"
+    android:background="@color/bg">
 
+    <!-- 顶部头图 -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="@drawable/bg_header"
         android:orientation="vertical"
-        android:paddingStart="20dp"
-        android:paddingEnd="20dp"
-        android:paddingTop="28dp"
-        android:paddingBottom="36dp">
+        android:paddingStart="22dp"
+        android:paddingEnd="22dp"
+        android:paddingTop="30dp"
+        android:paddingBottom="26dp">
 
-        <!-- 头部 -->
         <TextView
-            android:id="@+id/tvTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="数学出题器"
-            android:textColor="@color/text_main"
+            android:textColor="@color/white"
             android:textSize="26sp"
             android:textStyle="bold" />
 
         <TextView
-            android:id="@+id/tvSubtitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:text="自定义题目范围与数量，一键生成打印练习"
-            android:textColor="@color/text_secondary"
+            android:text="按年级选题，一键生成打印练习"
+            android:textColor="#E0EAFF"
             android:textSize="13sp" />
+    </LinearLayout>
 
-        <!-- 卡片一：数字范围 -->
+    <!-- 年级/学期选择 + 形式 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"
+        android:paddingTop="16dp"
+        android:paddingBottom="6dp">
+
+        <TextView
+            android:id="@+id/chipGrade"
+            android:layout_width="0dp"
+            android:layout_height="46dp"
+            android:layout_weight="1"
+            android:background="@drawable/bg_card"
+            android:gravity="center"
+            android:text="一年级 | 上学期  ▼"
+            android:textColor="@color/text_main"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/chipHorizontal"
+            android:layout_width="60dp"
+            android:layout_height="46dp"
+            android:layout_marginStart="10dp"
+            android:background="@drawable/bg_chip_selected"
+            android:gravity="center"
+            android:text="横式"
+            android:textColor="@color/white"
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/chipVertical"
+            android:layout_width="60dp"
+            android:layout_height="46dp"
+            android:layout_marginStart="8dp"
+            android:background="@drawable/bg_chip_unselected"
+            android:gravity="center"
+            android:text="竖式"
+            android:textColor="@color/text_secondary"
+            android:textSize="14sp" />
+    </LinearLayout>
+
+    <!-- 题型列表 -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"
+        android:paddingTop="10dp"
+        android:scrollbars="none">
+
         <LinearLayout
+            android:id="@+id/topicList"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="22dp"
-            android:background="@drawable/bg_card"
-            android:orientation="vertical">
+            android:orientation="vertical" />
+    </ScrollView>
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="数字范围"
-                android:textColor="@color/text_main"
-                android:textSize="15sp"
-                android:textStyle="bold" />
+    <!-- 温馨提示 -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#FFF7E8"
+        android:gravity="center"
+        android:padding="10dp"
+        android:text="温馨提示：合计最多打印 40 题"
+        android:textColor="#C8861B"
+        android:textSize="13sp" />
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:text="仅对加减法生效，只约束参与运算的数字（可留空）"
-                android:textColor="@color/text_secondary"
-                android:textSize="12sp" />
+    <!-- 底部操作栏 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/white"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="16dp">
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="14dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <EditText
-                    android:id="@+id/etRangeStart"
-                    android:layout_width="0dp"
-                    android:layout_height="48dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/bg_input"
-                    android:gravity="center"
-                    android:hint="起"
-                    android:importantForAutofill="no"
-                    android:inputType="number"
-                    android:maxLength="3"
-                    android:textColor="@color/text_main"
-                    android:textColorHint="@color/text_secondary"
-                    android:textSize="18sp" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="10dp"
-                    android:layout_marginEnd="10dp"
-                    android:text="到"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="15sp" />
-
-                <EditText
-                    android:id="@+id/etRangeEnd"
-                    android:layout_width="0dp"
-                    android:layout_height="48dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/bg_input"
-                    android:gravity="center"
-                    android:hint="止"
-                    android:importantForAutofill="no"
-                    android:inputType="number"
-                    android:maxLength="3"
-                    android:textColor="@color/text_main"
-                    android:textColorHint="@color/text_secondary"
-                    android:textSize="18sp" />
-            </LinearLayout>
-        </LinearLayout>
-
-        <!-- 卡片二：题型数量 -->
-        <LinearLayout
-            android:layout_width="match_parent"
+        <TextView
+            android:id="@+id/tvSelected"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:background="@drawable/bg_card"
-            android:orientation="vertical">
+            android:layout_weight="1"
+            android:text="已选择 0 题"
+            android:textColor="@color/text_main"
+            android:textSize="15sp"
+            android:textStyle="bold" />
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="出题数量"
-                android:textColor="@color/text_main"
-                android:textSize="15sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:text="各题型数量之和最多 40 道"
-                android:textColor="@color/text_secondary"
-                android:textSize="12sp" />
-
-            <!-- 加法 -->
-            <LinearLayout
-                android:id="@+id/rowAdd"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="14dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:id="@+id/badgeAdd"
-                    android:layout_width="34dp"
-                    android:layout_height="34dp"
-                    android:background="@drawable/bg_soft"
-                    android:gravity="center"
-                    android:text="＋"
-                    android:textColor="@color/add_color"
-                    android:textSize="20sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginStart="12dp"
-                    android:text="加法"
-                    android:textColor="@color/text_main"
-                    android:textSize="16sp" />
-
-                <EditText
-                    android:id="@+id/etAdd"
-                    android:layout_width="64dp"
-                    android:layout_height="44dp"
-                    android:background="@drawable/bg_input"
-                    android:gravity="center"
-                    android:inputType="number"
-                    android:maxLength="2"
-                    android:text="5"
-                    android:textColor="@color/text_main"
-                    android:textSize="16sp" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:text="道"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="14sp" />
-            </LinearLayout>
-
-            <!-- 减法 -->
-            <LinearLayout
-                android:id="@+id/rowSub"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:id="@+id/badgeSub"
-                    android:layout_width="34dp"
-                    android:layout_height="34dp"
-                    android:background="@drawable/bg_soft"
-                    android:gravity="center"
-                    android:text="－"
-                    android:textColor="@color/sub_color"
-                    android:textSize="20sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginStart="12dp"
-                    android:text="减法"
-                    android:textColor="@color/text_main"
-                    android:textSize="16sp" />
-
-                <EditText
-                    android:id="@+id/etSub"
-                    android:layout_width="64dp"
-                    android:layout_height="44dp"
-                    android:background="@drawable/bg_input"
-                    android:gravity="center"
-                    android:inputType="number"
-                    android:maxLength="2"
-                    android:text="5"
-                    android:textColor="@color/text_main"
-                    android:textSize="16sp" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:text="道"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="14sp" />
-            </LinearLayout>
-
-            <!-- 乘法 -->
-            <LinearLayout
-                android:id="@+id/rowMul"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:id="@+id/badgeMul"
-                    android:layout_width="34dp"
-                    android:layout_height="34dp"
-                    android:background="@drawable/bg_soft"
-                    android:gravity="center"
-                    android:text="×"
-                    android:textColor="@color/mul_color"
-                    android:textSize="20sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginStart="12dp"
-                    android:text="乘法"
-                    android:textColor="@color/text_main"
-                    android:textSize="16sp" />
-
-                <EditText
-                    android:id="@+id/etMul"
-                    android:layout_width="64dp"
-                    android:layout_height="44dp"
-                    android:background="@drawable/bg_input"
-                    android:gravity="center"
-                    android:inputType="number"
-                    android:maxLength="2"
-                    android:text="5"
-                    android:textColor="@color/text_main"
-                    android:textSize="16sp" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:text="道"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="14sp" />
-            </LinearLayout>
-
-            <!-- 除法 -->
-            <LinearLayout
-                android:id="@+id/rowDiv"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:id="@+id/badgeDiv"
-                    android:layout_width="34dp"
-                    android:layout_height="34dp"
-                    android:background="@drawable/bg_soft"
-                    android:gravity="center"
-                    android:text="÷"
-                    android:textColor="@color/div_color"
-                    android:textSize="20sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginStart="12dp"
-                    android:text="除法"
-                    android:textColor="@color/text_main"
-                    android:textSize="16sp" />
-
-                <EditText
-                    android:id="@+id/etDiv"
-                    android:layout_width="64dp"
-                    android:layout_height="44dp"
-                    android:background="@drawable/bg_input"
-                    android:gravity="center"
-                    android:inputType="number"
-                    android:maxLength="2"
-                    android:text="5"
-                    android:textColor="@color/text_main"
-                    android:textSize="16sp" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:text="道"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="14sp" />
-            </LinearLayout>
-        </LinearLayout>
-
-        <!-- 卡片三：题目形式 -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:background="@drawable/bg_card"
-            android:orientation="vertical">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="题目形式"
-                android:textColor="@color/text_main"
-                android:textSize="15sp"
-                android:textStyle="bold" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:id="@+id/chipHorizontal"
-                    android:layout_width="0dp"
-                    android:layout_height="48dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/bg_chip_selected"
-                    android:gravity="center"
-                    android:text="横式"
-                    android:textColor="@color/chip_selected_text"
-                    android:textSize="15sp" />
-
-                <TextView
-                    android:id="@+id/chipVertical"
-                    android:layout_width="0dp"
-                    android:layout_height="48dp"
-                    android:layout_weight="1"
-                    android:layout_marginStart="12dp"
-                    android:background="@drawable/bg_chip_unselected"
-                    android:gravity="center"
-                    android:text="竖式"
-                    android:textColor="@color/chip_unselected_text"
-                    android:textSize="15sp" />
-            </LinearLayout>
-
-            <TextView
-                android:id="@+id/tvFormatNote"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:text="两者都选时，每道题随机采用一种形式"
-                android:textColor="@color/text_secondary"
-                android:textSize="12sp" />
-        </LinearLayout>
-
-        <!-- 下一步 -->
         <Button
-            android:id="@+id/btnNext"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:layout_marginTop="26dp"
+            android:id="@+id/btnGenerate"
+            android:layout_width="150dp"
+            android:layout_height="52dp"
             android:background="@drawable/bg_button"
             android:enabled="false"
             android:stateListAnimator="@null"
-            android:text="生成题目"
+            android:text="生成练习"
             android:textAllCaps="false"
             android:textColor="@color/white"
-            android:textSize="17sp"
+            android:textSize="16sp"
             android:textStyle="bold" />
     </LinearLayout>
-</ScrollView>
+</LinearLayout>
