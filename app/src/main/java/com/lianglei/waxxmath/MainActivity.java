@@ -13,7 +13,6 @@ import android.os.Environment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
-import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -139,8 +138,8 @@ public class MainActivity extends android.app.Activity {
             ((TextView) card.findViewById(R.id.tvTopicExample)).setText(t.example);
             final TextView tvCount = card.findViewById(R.id.tvCount);
             tvCount.setText("0");
-            ImageButton minus = card.findViewById(R.id.btnMinus);
-            ImageButton plus = card.findViewById(R.id.btnPlus);
+            View minus = card.findViewById(R.id.btnMinus);
+            View plus = card.findViewById(R.id.btnPlus);
             minus.setOnClickListener(v -> changeCount(t, -1, tvCount));
             plus.setOnClickListener(v -> changeCount(t, +1, tvCount));
             topicList.addView(card);

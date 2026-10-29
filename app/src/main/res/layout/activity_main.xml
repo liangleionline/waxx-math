@@ -33,49 +33,56 @@
             android:textSize="13sp" />
     </LinearLayout>
 
-    <!-- 年级/学期选择 + 形式 -->
+    <!-- 年级/学期选择 -->
+    <TextView
+        android:id="@+id/chipGrade"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp"
+        android:layout_marginTop="16dp"
+        android:background="@drawable/bg_white"
+        android:gravity="center"
+        android:text="一年级 | 上学期  ▼"
+        android:textColor="@color/text_main"
+        android:textSize="16sp"
+        android:textStyle="bold" />
+
+    <!-- 题目形式 -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:paddingStart="20dp"
         android:paddingEnd="20dp"
-        android:paddingTop="16dp"
-        android:paddingBottom="6dp">
-
-        <TextView
-            android:id="@+id/chipGrade"
-            android:layout_width="0dp"
-            android:layout_height="46dp"
-            android:layout_weight="1"
-            android:background="@drawable/bg_card"
-            android:gravity="center"
-            android:text="一年级 | 上学期  ▼"
-            android:textColor="@color/text_main"
-            android:textSize="15sp"
-            android:textStyle="bold" />
+        android:paddingTop="12dp">
 
         <TextView
             android:id="@+id/chipHorizontal"
-            android:layout_width="60dp"
-            android:layout_height="46dp"
-            android:layout_marginStart="10dp"
+            android:layout_width="wrap_content"
+            android:minWidth="84dp"
+            android:layout_height="44dp"
             android:background="@drawable/bg_chip_selected"
             android:gravity="center"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
             android:text="横式"
             android:textColor="@color/white"
-            android:textSize="14sp" />
+            android:textSize="15sp" />
 
         <TextView
             android:id="@+id/chipVertical"
-            android:layout_width="60dp"
-            android:layout_height="46dp"
-            android:layout_marginStart="8dp"
+            android:layout_width="wrap_content"
+            android:minWidth="84dp"
+            android:layout_height="44dp"
+            android:layout_marginStart="12dp"
             android:background="@drawable/bg_chip_unselected"
             android:gravity="center"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
             android:text="竖式"
             android:textColor="@color/text_secondary"
-            android:textSize="14sp" />
+            android:textSize="15sp" />
     </LinearLayout>
 
     <!-- 题型列表 -->
