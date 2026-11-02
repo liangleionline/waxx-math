@@ -2,8 +2,6 @@ package com.lianglei.waxxmath;
 
 import android.Manifest;
 import android.app.AlertDialog;
-import android.content.ClipData;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -79,8 +77,6 @@ public class MainActivity extends android.app.Activity {
     // ---------- 年级选择 ----------
     private void showGradePicker() {
         final String[] items = new String[TopicCatalog.GRADE_NAMES.length];
-        final boolean[] springs = new boolean[TopicCatalog.GRADE_NAMES.length];
-        int checked = 0;
         for (int i = 0; i < items.length; i++) {
             int g = i + 1;
             if (TopicCatalog.hasSpring(g)) {
@@ -88,7 +84,6 @@ public class MainActivity extends android.app.Activity {
             } else {
                 items[i] = TopicCatalog.GRADE_NAMES[i] + "（全学期）";
             }
-            springs[i] = true;
         }
         new AlertDialog.Builder(this)
                 .setTitle("选择年级")
@@ -267,8 +262,9 @@ public class MainActivity extends android.app.Activity {
                 .setTitle("已生成")
                 .setMessage("共 " + res.total + " 题" + (res.duplicated ? "（一式两份）" : "")
                         + "\n已保存到：" + file.getAbsolutePath())
-                .setPositiveButton("确定", null)
-                .setNeutralButton("分享文件", (d, w) -> sharePdf(file))
+                // 分享放最右侧（positive），更容易用右手点按
+                .setPositiveButton("分享文件", (d, w) -> sharePdf(file))
+                .setNeutralButton("确定", null)
                 .show();
     }
 
