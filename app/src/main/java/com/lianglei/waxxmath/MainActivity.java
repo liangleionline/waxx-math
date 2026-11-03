@@ -3,6 +3,7 @@ package com.lianglei.waxxmath;
 import android.Manifest;
 import android.app.AlertDialog;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
@@ -31,6 +32,7 @@ public class MainActivity extends android.app.Activity {
 
     private static final int REQ_STORAGE = 1001;
     private static final int MAX_TOTAL = 40;
+    private static final String PREFS = "last_print";
 
     private TextView chipGrade, chipHorizontal, chipVertical;
     private LinearLayout topicList;
@@ -56,6 +58,7 @@ public class MainActivity extends android.app.Activity {
         topicList = findViewById(R.id.topicList);
         tvSelected = findViewById(R.id.tvSelected);
         btnGenerate = findViewById(R.id.btnGenerate);
+        TextView btnRecall = findViewById(R.id.btnRecall);
 
         chipGrade.setOnClickListener(v -> showGradePicker());
         chipHorizontal.setOnClickListener(v -> {
@@ -67,6 +70,7 @@ public class MainActivity extends android.app.Activity {
             vSelected = !vSelected; applyFormat();
         });
         btnGenerate.setOnClickListener(v -> onGenerate());
+        btnRecall.setOnClickListener(v -> recallLastSelection());
 
         applyGradeLabel();
         applyFormat();
@@ -136,6 +140,7 @@ public class MainActivity extends android.app.Activity {
         List<TopicCatalog.Topic> topics = TopicCatalog.topicsFor(grade, spring);
         for (TopicCatalog.Topic t : topics) {
             View card = inf.inflate(R.layout.item_topic, topicList, false);
+            card.setTag(t);
             ((TextView) card.findViewById(R.id.tvTopicTitle)).setText(t.title);
             ((TextView) card.findViewById(R.id.tvTopicExample)).setText(t.example);
             final TextView tvCount = card.findViewById(R.id.tvCount);
@@ -148,6 +153,50 @@ public class MainActivity extends android.app.Activity {
             tvCount.setClickable(true);
             topicList.addView(card);
         }
+    }
+
+    // ---------- 复制上次打印选择 ----------
+    private void saveLastSelection() {
+        SharedPreferences sp = getSharedPreferences(PREFS, MODE_PRIVATE);
+        SharedPreferences.Editor e = sp.edit().clear();
+        e.putInt("grade", grade);
+        e.putBoolean("spring", spring);
+        e.putBoolean("h", hSelected);
+        e.putBoolean("v", vSelected);
+        for (Map.Entry<TopicCatalog.Topic, Integer> en : counts.entrySet()) {
+            if (en.getValue() > 0) e.putInt("t_" + en.getKey().id, en.getValue());
+        }
+        e.apply();
+    }
+
+    private void recallLastSelection() {
+        SharedPreferences sp = getSharedPreferences(PREFS, MODE_PRIVATE);
+        if (!sp.contains("grade")) {
+            Toast.makeText(this, "暂无上次打印记录", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        grade = sp.getInt("grade", grade);
+        spring = sp.getBoolean("spring", false);
+        hSelected = sp.getBoolean("h", true);
+        vSelected = sp.getBoolean("v", false);
+        if (!hSelected && !vSelected) hSelected = true; // 至少保留一种格式
+        rebuildTopics();
+        for (int i = 0; i < topicList.getChildCount(); i++) {
+            View card = topicList.getChildAt(i);
+            Object tag = card.getTag();
+            if (tag instanceof TopicCatalog.Topic) {
+                TopicCatalog.Topic t = (TopicCatalog.Topic) tag;
+                int n = sp.getInt("t_" + t.id, 0);
+                if (n > 0) {
+                    counts.put(t, n);
+                    ((TextView) card.findViewById(R.id.tvCount)).setText(String.valueOf(n));
+                }
+            }
+        }
+        applyGradeLabel();
+        applyFormat();
+        refreshBottom();
+        Toast.makeText(this, "已复制上次打印选择", Toast.LENGTH_SHORT).show();
     }
 
     private void changeCount(TopicCatalog.Topic t, int delta, TextView tvCount) {
@@ -250,6 +299,7 @@ public class MainActivity extends android.app.Activity {
         File out = new File(dir, name);
         try {
             PdfExporter.Result res = PdfExporter.export(qs, duplicate, out);
+            saveLastSelection(); // 记住本次打印配置，供“复制上次”恢复
             showResultDialog(res);
         } catch (Exception e) {
             Toast.makeText(this, "生成失败：" + e.getMessage(), Toast.LENGTH_LONG).show();
