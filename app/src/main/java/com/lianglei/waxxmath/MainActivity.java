@@ -11,6 +11,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -218,10 +219,9 @@ public class MainActivity extends android.app.Activity {
         final EditText et = new EditText(this);
         et.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
         et.setText(String.valueOf(cur));
-        et.setSelection(et.getText().length());
         int pad = (int) (20 * getResources().getDisplayMetrics().density);
         et.setPadding(pad, pad, pad, pad);
-        new AlertDialog.Builder(this)
+        final AlertDialog dlg = new AlertDialog.Builder(this)
                 .setTitle(t.title)
                 .setMessage("输入本题数量（合计最多 " + MAX_TOTAL + " 题）")
                 .setView(et)
@@ -241,7 +241,12 @@ public class MainActivity extends android.app.Activity {
                     refreshBottom();
                 })
                 .setNegativeButton("取消", null)
-                .show();
+                .create();
+        dlg.show();
+        // 自动唤起数字键盘、光标聚焦输入框，并全选已有数字（直接输入即可覆盖）
+        dlg.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+        et.requestFocus();
+        et.selectAll();
     }
 
     private int totalCount() {
