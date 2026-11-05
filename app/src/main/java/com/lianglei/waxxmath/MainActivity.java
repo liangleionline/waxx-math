@@ -24,6 +24,8 @@ import com.lianglei.waxxmath.util.QuestionGenerator;
 import com.lianglei.waxxmath.util.TopicCatalog;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -299,7 +301,7 @@ public class MainActivity extends android.app.Activity {
             Toast.makeText(this, "请至少选择一道题目", Toast.LENGTH_SHORT).show();
             return;
         }
-        File dir = new File(Environment.getExternalStorageDirectory(), "waxx");
+        File dir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "waxx");
         String name = "数学题_" + new java.text.SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new java.util.Date()) + ".pdf";
         File out = new File(dir, name);
         try {
@@ -351,7 +353,7 @@ public class MainActivity extends android.app.Activity {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             new AlertDialog.Builder(this)
                     .setTitle("需要存储权限")
-                    .setMessage("需要“所有文件访问”权限才能将 PDF 保存到手机根目录 waxx 文件夹")
+                    .setMessage("需要“所有文件访问”权限才能将 PDF 保存到手机 Download/waxx 文件夹")
                     .setPositiveButton("去设置", (d, w) -> {
                         Intent i = new Intent(android.provider.Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
                         i.setData(Uri.parse("package:" + getPackageName()));
@@ -381,9 +383,32 @@ public class MainActivity extends android.app.Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        cleanupOldPdfs(); // 启动/回前台时清理，仅保留最新 3 个
         if (pendingGenerate && canWrite()) {
             pendingGenerate = false;
             onGenerate();
+        }
+    }
+
+    /**
+     * 清理 Download/waxx 下由本软件生成的 PDF，仅保留最新的 3 个。
+     * 只匹配本软件的命名规则「数学题_时间戳.pdf」，不会误删其他文件。
+     */
+    private void cleanupOldPdfs() {
+        if (!canWrite()) return;
+        File dir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "waxx");
+        File[] files = dir.listFiles();
+        if (files == null) return;
+        List<File> ours = new ArrayList<>();
+        for (File f : files) {
+            String n = f.getName();
+            if (f.isFile() && n.startsWith("数学题_") && n.endsWith(".pdf")) ours.add(f);
+        }
+        if (ours.size() <= 3) return;
+        Collections.sort(ours, (a, b) -> Long.compare(b.lastModified(), a.lastModified()));
+        for (int i = 3; i < ours.size(); i++) {
+            //noinspection ResultOfMethodCallIgnored
+            ours.get(i).delete();
         }
     }
 }
