@@ -11,65 +11,47 @@ import java.io.FileOutputStream;
 import java.util.List;
 
 /**
- * 将题目按 A4 8行5列网格导出为 PDF。
- * 题目水平居中、垂直位于格子高度 1/4 处；支持一式两份。
+ * 试卷式 PDF 导出：
+ * 前后两段 —— 前一段为纯题目卷，后一段为同布局的参考答案卷（页数一一对应）。
  */
 public class PdfExporter {
 
-    private static final int ROWS = 8, COLS = 5;
-    private static final float MARGIN = 30f;
-    private static final float PAGE_W = 595f; // A4 宽度(pt)
-    private static final float PAGE_H = 842f; // A4 高度(pt)
+    private static final float PAGE_W = PaperLayout.PAGE_W;
+    private static final float PAGE_H = PaperLayout.PAGE_H;
+    private static final float MARGIN_L = PaperLayout.MARGIN_L;
+    private static final float MARGIN_R = PaperLayout.MARGIN_R;
+    private static final float CONTENT_W = PaperLayout.CONTENT_W;
+    private static final float CONTENT_TOP = PaperLayout.CONTENT_TOP;
+    private static final int ANSWER_RED = 0xFFC62828;
 
     public static final class Result {
         public final File file;
         public final int total;
-        public final boolean duplicated;
-        public Result(File file, int total, boolean duplicated) {
+        public final int pages;
+        public Result(File file, int total, int pages) {
             this.file = file;
             this.total = total;
-            this.duplicated = duplicated;
+            this.pages = pages;
         }
     }
 
-    public static Result export(List<Question> questions, boolean duplicate, File outFile)
-            throws Exception {
+    public static Result export(List<PaperLayout.Section> sections, File outFile) throws Exception {
+        int total = 0;
+        for (PaperLayout.Section s : sections) total += s.questions.size();
+
+        List<PaperLayout.PageData> pages = PaperLayout.build(sections);
+        int n = Math.max(1, pages.size());
+
         PdfDocument doc = new PdfDocument();
-        PdfDocument.PageInfo info = new PdfDocument.PageInfo.Builder((int) PAGE_W, (int) PAGE_H, 1)
-                .create();
-        PdfDocument.Page page = doc.startPage(info);
-        Canvas canvas = page.getCanvas();
 
-        float cellW = (PAGE_W - 2 * MARGIN) / COLS;
-        float cellH = (PAGE_H - 2 * MARGIN) / ROWS;
-
-        drawGrid(canvas, cellW, cellH);
-
-        // 题目排版
-        Paint textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        textPaint.setColor(Color.BLACK);
-        textPaint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
-        textPaint.setTextSize(cellW * 0.18f);
-
-        Paint rulePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        rulePaint.setColor(Color.BLACK);
-        rulePaint.setStrokeWidth(1.2f);
-
-        int n = questions.size();
-        boolean duplicated = duplicate && n <= 20;
-
+        // 第一段：题目卷
         for (int i = 0; i < n; i++) {
-            // 上半部分格子（前20格）
-            int topIndex = i;
-            drawQuestion(canvas, questions.get(i), topIndex, cellW, cellH, textPaint, rulePaint);
-            // 一式两份：复制到下半部分（从第5行开始）
-            if (duplicated) {
-                int bottomIndex = i + 20;
-                drawQuestion(canvas, questions.get(i), bottomIndex, cellW, cellH, textPaint, rulePaint);
-            }
+            renderPage(doc, i + 1, n, pages.get(i), false);
         }
-
-        doc.finishPage(page);
+        // 第二段：参考答案卷（同一布局）
+        for (int i = 0; i < n; i++) {
+            renderPage(doc, i + 1, n, pages.get(i), true);
+        }
 
         File dir = outFile.getParentFile();
         if (dir != null && !dir.exists()) dir.mkdirs();
@@ -78,64 +60,149 @@ public class PdfExporter {
         } finally {
             doc.close();
         }
-        return new Result(outFile, n, duplicated);
+        return new Result(outFile, total, n);
     }
 
-    private static void drawGrid(Canvas canvas, float cellW, float cellH) {
-        Paint line = new Paint(Paint.ANTI_ALIAS_FLAG);
-        line.setColor(Color.parseColor("#CFD6E4"));
-        line.setStrokeWidth(1f);
-        for (int r = 0; r <= ROWS; r++) {
-            float y = MARGIN + r * cellH;
-            canvas.drawLine(MARGIN, y, PAGE_W - MARGIN, y, line);
-        }
-        for (int c = 0; c <= COLS; c++) {
-            float x = MARGIN + c * cellW;
-            canvas.drawLine(x, MARGIN, x, PAGE_H - MARGIN, line);
-        }
-    }
+    private static void renderPage(PdfDocument doc, int pageNo, int totalPages,
+                                   PaperLayout.PageData data, boolean answer) {
+        PdfDocument.PageInfo info = new PdfDocument.PageInfo.Builder(
+                (int) PAGE_W, (int) PAGE_H, pageNo).create();
+        PdfDocument.Page page = doc.startPage(info);
+        Canvas canvas = page.getCanvas();
 
-    private static void drawQuestion(Canvas canvas, Question q, int index,
-                                     float cellW, float cellH,
-                                     Paint textPaint, Paint rulePaint) {
-        int row = index / COLS;
-        int col = index % COLS;
-        float left = MARGIN + col * cellW;
-        float top = MARGIN + row * cellH;
-        // 格子内 1/4 高度基准线
-        float anchorY = top + cellH * 0.25f;
-        float centerX = left + cellW / 2f;
+        Paint text = new Paint(Paint.ANTI_ALIAS_FLAG);
+        text.setColor(Color.BLACK);
+        text.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+        text.setTextSize(11f);
 
-        if (!q.vertical) {
-            String s = q.expr;
-            // 横式较长时自动缩小字号
-            float size = textPaint.getTextSize();
-            if (textPaint.measureText(s) > cellW * 0.92f) {
-                textPaint.setTextSize(size * (cellW * 0.92f / textPaint.measureText(s)));
+        Paint ans = new Paint(Paint.ANTI_ALIAS_FLAG);
+        ans.setColor(ANSWER_RED);
+        ans.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+        ans.setTextSize(11f);
+
+        Paint thin = new Paint(Paint.ANTI_ALIAS_FLAG);
+        thin.setColor(Color.parseColor("#A9B2C0"));
+        thin.setStrokeWidth(0.6f);
+
+        drawHeader(canvas, text, thin, answer);
+        drawFooter(canvas, text, pageNo, totalPages, answer);
+
+        float y = CONTENT_TOP;
+        for (PaperLayout.Row row : data.rows) {
+            if (row.isTitle()) {
+                // 编号已在排版阶段固定，保证跨页连续
+                text.setTextSize(11.5f);
+                canvas.drawText(row.title, MARGIN_L, y + 16f, text);
+                text.setTextSize(11f);
+            } else {
+                float rowTop = y + 2f;
+                float colW = CONTENT_W / row.cols;
+                for (int i = 0; i < row.items.size(); i++) {
+                    Question q = row.items.get(i);
+                    float left = MARGIN_L + i * colW;
+                    if (q.vertical) {
+                        drawVertical(canvas, q, left, rowTop, colW, row.height, text, ans, answer);
+                    } else {
+                        float baseline = rowTop + row.height * 0.70f;
+                        drawInline(canvas, q, left + 6f, baseline, colW - 12f, text, ans, answer);
+                    }
+                }
             }
-            float w = textPaint.measureText(s);
-            canvas.drawText(s, centerX - w / 2f, anchorY, textPaint);
-            textPaint.setTextSize(size);
-        } else {
-            // 竖式：两行 + 下划线，整体垂直居中于 1/4 高度附近
-            String topS = q.vTop;
-            String botS = q.vBottom;
-            float lh = textPaint.getFontSpacing();
-            float blockH = lh * 2f + 10f;
-            float blockTop = anchorY - blockH / 2f;
-            float topBaseline = blockTop + lh * 0.8f;
-            float botBaseline = blockTop + lh + lh * 0.8f;
-            float ruleY = botBaseline + 6f;
-
-            // 两行右对齐到算子宽度，整体相对格子居中
-            float opW = textPaint.measureText(botS);
-            float topW = textPaint.measureText(topS);
-            float w = Math.max(opW, topW);
-            float rightX = centerX + w / 2f;
-
-            canvas.drawText(topS, rightX - topW, topBaseline, textPaint);
-            canvas.drawText(botS, rightX - opW, botBaseline, textPaint);
-            canvas.drawLine(rightX - w - 6f, ruleY, rightX + 6f, ruleY, rulePaint);
+            y += row.height;
         }
+
+        doc.finishPage(page);
+    }
+
+    private static void drawHeader(Canvas canvas, Paint text, Paint thin, boolean answer) {
+        text.setTextSize(10f);
+        canvas.drawText("姓名：____________    日期：____________    用时：__________    得分：__________",
+                MARGIN_L, 34f, text);
+        text.setTextSize(9f);
+        if (answer) {
+            Paint red = new Paint(Paint.ANTI_ALIAS_FLAG);
+            red.setColor(ANSWER_RED);
+            red.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+            red.setTextSize(9.5f);
+            String tag = "（参考答案）";
+            float w = red.measureText(tag);
+            canvas.drawText(tag, PAGE_W - MARGIN_R - w, 34f, red);
+        }
+        canvas.drawLine(MARGIN_L, 45f, PAGE_W - MARGIN_R, 45f, thin);
+        text.setTextSize(11f);
+    }
+
+    private static void drawFooter(Canvas canvas, Paint text, int pageNo, int totalPages,
+                                   boolean answer) {
+        text.setTextSize(9f);
+        String s = (answer ? "参考答案 · " : "")
+                + "第 " + pageNo + " 页 / 共 " + totalPages + " 页";
+        float w = text.measureText(s);
+        canvas.drawText(s, (PAGE_W - w) / 2f, PAGE_H - 12f, text);
+        text.setTextSize(11f);
+    }
+
+    /** 横式题目：prefix + 占位/答案 + suffix */
+    private static void drawInline(Canvas canvas, Question q, float x, float baseline,
+                                   float maxW, Paint text, Paint ans, boolean answer) {
+        String pre = q.prefix;
+        String mid = answer ? q.answer : q.placeholder;
+        String suf = q.suffix;
+
+        float size = 11f;
+        text.setTextSize(size);
+        float w = text.measureText(pre) + text.measureText(mid) + text.measureText(suf);
+        if (w > maxW && w > 0) {
+            size = Math.max(7f, size * maxW / w);
+            text.setTextSize(size);
+            ans.setTextSize(size);
+        }
+
+        canvas.drawText(pre, x, baseline, text);
+        float x2 = x + text.measureText(pre);
+        if (answer) {
+            canvas.drawText(mid, x2, baseline, ans);
+        } else {
+            canvas.drawText(mid, x2, baseline, text);
+        }
+        float x3 = x2 + text.measureText(mid);
+        canvas.drawText(suf, x3, baseline, text);
+
+        text.setTextSize(11f);
+        ans.setTextSize(11f);
+    }
+
+    /** 竖式题目 */
+    private static void drawVertical(Canvas canvas, Question q, float left, float top,
+                                     float colW, float rowH, Paint text, Paint ans,
+                                     boolean answer) {
+        String a = q.vTop;
+        String b = q.vBottom;
+        if (a == null || b == null) return;
+
+        float size = 10f;
+        text.setTextSize(size);
+        ans.setTextSize(size);
+        float aw = text.measureText(a);
+        float bw = text.measureText(b);
+        float w = Math.max(aw, bw);
+        float cx = left + colW / 2f;
+        float rightX = cx + w / 2f;
+
+        float topBase = top + rowH * 0.32f;
+        float botBase = top + rowH * 0.32f + text.getFontSpacing();
+        float ruleY = botBase + 5f;
+
+        canvas.drawText(a, rightX - aw, topBase, text);
+        canvas.drawText(b, rightX - bw, botBase, text);
+        canvas.drawLine(rightX - w - 5f, ruleY, rightX + 5f, ruleY, text);
+
+        if (answer) {
+            float ansW = ans.measureText(q.answer);
+            canvas.drawText(q.answer, rightX - ansW, ruleY + 16f, ans);
+        }
+
+        text.setTextSize(11f);
+        ans.setTextSize(11f);
     }
 }

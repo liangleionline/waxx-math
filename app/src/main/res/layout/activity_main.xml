@@ -127,7 +127,7 @@
         android:background="#FFF7E8"
         android:gravity="center"
         android:padding="10dp"
-        android:text="温馨提示：合计最多打印 40 题"
+        android:text="温馨提示：数量用 +/− 调节，自动排成试卷，卷后附答案页"
         android:textColor="#C8861B"
         android:textSize="13sp" />
 

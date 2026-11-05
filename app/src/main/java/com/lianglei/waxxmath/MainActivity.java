@@ -11,13 +11,12 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.WindowManager;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.lianglei.waxxmath.util.PaperLayout;
 import com.lianglei.waxxmath.util.PdfExporter;
 import com.lianglei.waxxmath.util.Question;
 import com.lianglei.waxxmath.util.QuestionGenerator;
@@ -34,7 +33,6 @@ import java.util.Map;
 public class MainActivity extends android.app.Activity {
 
     private static final int REQ_STORAGE = 1001;
-    private static final int MAX_TOTAL = 40;
     private static final String PREFS = "last_print";
 
     private TextView chipGrade, chipHorizontal, chipVertical;
@@ -101,7 +99,6 @@ public class MainActivity extends android.app.Activity {
                         d.dismiss();
                         afterGradeChanged();
                     } else {
-                        // 选择年级后再选学期
                         d.dismiss();
                         showSemesterPicker();
                     }
@@ -146,16 +143,57 @@ public class MainActivity extends android.app.Activity {
             card.setTag(t);
             ((TextView) card.findViewById(R.id.tvTopicTitle)).setText(t.title);
             ((TextView) card.findViewById(R.id.tvTopicExample)).setText(t.example);
-            final TextView tvCount = card.findViewById(R.id.tvCount);
+            TextView tvCount = card.findViewById(R.id.tvCount);
             tvCount.setText("0");
             View minus = card.findViewById(R.id.btnMinus);
             View plus = card.findViewById(R.id.btnPlus);
             minus.setOnClickListener(v -> changeCount(t, -1, tvCount));
             plus.setOnClickListener(v -> changeCount(t, +1, tvCount));
-            tvCount.setOnClickListener(v -> showCountDialog(t, tvCount));
-            tvCount.setClickable(true);
             topicList.addView(card);
         }
+    }
+
+    /** 每种题型的数量步进：找规律 2 题/次，其余 4 题/次；不允许手动输入 */
+    private int stepOf(TopicCatalog.Topic t) {
+        return t.kind == Question.Kind.PATTERN ? 2 : 4;
+    }
+
+    private void changeCount(TopicCatalog.Topic t, int delta, TextView tvCount) {
+        int cur = counts.getOrDefault(t, 0);
+        int step = stepOf(t);
+        int next;
+        if (delta > 0) {
+            next = ((cur / step) + 1) * step;
+        } else {
+            next = Math.max(0, ((cur + step - 1) / step - 1) * step);
+        }
+        counts.put(t, next);
+        tvCount.setText(String.valueOf(next));
+        refreshBottom();
+    }
+
+    private int totalCount() {
+        int s = 0;
+        for (int v : counts.values()) s += v;
+        return s;
+    }
+
+    private void refreshBottom() {
+        int n = totalCount();
+        tvSelected.setText("已选择 " + n + " 题");
+        btnGenerate.setEnabled(n > 0);
+        btnGenerate.setBackgroundResource(n > 0 ? R.drawable.bg_button : R.drawable.bg_button_disabled);
+    }
+
+    private void applyFormat() {
+        chipHorizontal.setBackgroundResource(hSelected ? R.drawable.bg_chip_selected : R.drawable.bg_chip_unselected);
+        chipHorizontal.setTextColor(getColor(hSelected ? R.color.chip_selected_text : R.color.chip_unselected_text));
+        chipVertical.setBackgroundResource(vSelected ? R.drawable.bg_chip_selected : R.drawable.bg_chip_unselected);
+        chipVertical.setTextColor(getColor(vSelected ? R.color.chip_selected_text : R.color.chip_unselected_text));
+    }
+
+    private void toastNeedOne() {
+        Toast.makeText(this, "横式和竖式至少选一个", Toast.LENGTH_SHORT).show();
     }
 
     // ---------- 复制上次打印选择 ----------
@@ -191,6 +229,9 @@ public class MainActivity extends android.app.Activity {
                 TopicCatalog.Topic t = (TopicCatalog.Topic) tag;
                 int n = sp.getInt("t_" + t.id, 0);
                 if (n > 0) {
+                    int step = stepOf(t);
+                    // 旧版可能存了非步长倍数的数量，向上取整到合法倍数
+                    if (n % step != 0) n = ((n / step) + 1) * step;
                     counts.put(t, n);
                     ((TextView) card.findViewById(R.id.tvCount)).setText(String.valueOf(n));
                 }
@@ -202,110 +243,27 @@ public class MainActivity extends android.app.Activity {
         Toast.makeText(this, "已复制上次打印选择", Toast.LENGTH_SHORT).show();
     }
 
-    private void changeCount(TopicCatalog.Topic t, int delta, TextView tvCount) {
-        int cur = counts.getOrDefault(t, 0);
-        int next = cur + delta;
-        if (next < 0) next = 0;
-        int total = totalCount() - cur + next;
-        if (total > MAX_TOTAL) {
-            Toast.makeText(this, R.string.toast_over_40, Toast.LENGTH_SHORT).show();
-            return;
-        }
-        counts.put(t, next);
-        tvCount.setText(String.valueOf(next));
-        refreshBottom();
-    }
-
-    private void showCountDialog(TopicCatalog.Topic t, TextView tvCount) {
-        int cur = counts.getOrDefault(t, 0);
-        final EditText et = new EditText(this);
-        et.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
-        et.setText(String.valueOf(cur));
-        int pad = (int) (20 * getResources().getDisplayMetrics().density);
-        et.setPadding(pad, pad, pad, pad);
-        final AlertDialog dlg = new AlertDialog.Builder(this)
-                .setTitle(t.title)
-                .setMessage("输入本题数量（合计最多 " + MAX_TOTAL + " 题）")
-                .setView(et)
-                .setPositiveButton("确定", (d, w) -> {
-                    int v;
-                    try { v = Integer.parseInt(et.getText().toString().trim()); }
-                    catch (Exception e) { v = 0; }
-                    if (v < 0) v = 0;
-                    int other = totalCount() - cur;
-                    if (other + v > MAX_TOTAL) {
-                        v = MAX_TOTAL - other;
-                        if (v < 0) v = 0;
-                        Toast.makeText(this, R.string.toast_over_40, Toast.LENGTH_SHORT).show();
-                    }
-                    counts.put(t, v);
-                    tvCount.setText(String.valueOf(v));
-                    refreshBottom();
-                })
-                .setNegativeButton("取消", null)
-                .create();
-        dlg.show();
-        // 自动唤起数字键盘、光标聚焦输入框，并全选已有数字（直接输入即可覆盖）
-        dlg.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
-        et.requestFocus();
-        et.selectAll();
-    }
-
-    private int totalCount() {
-        int s = 0;
-        for (int v : counts.values()) s += v;
-        return s;
-    }
-
-    private void refreshBottom() {
-        int n = totalCount();
-        tvSelected.setText("已选择 " + n + " 题");
-        btnGenerate.setEnabled(n > 0);
-        btnGenerate.setBackgroundResource(n > 0 ? R.drawable.bg_button : R.drawable.bg_button_disabled);
-    }
-
-    private void applyFormat() {
-        chipHorizontal.setBackgroundResource(hSelected ? R.drawable.bg_chip_selected : R.drawable.bg_chip_unselected);
-        chipHorizontal.setTextColor(getColor(hSelected ? R.color.chip_selected_text : R.color.chip_unselected_text));
-        chipVertical.setBackgroundResource(vSelected ? R.drawable.bg_chip_selected : R.drawable.bg_chip_unselected);
-        chipVertical.setTextColor(getColor(vSelected ? R.color.chip_selected_text : R.color.chip_unselected_text));
-    }
-
-    private void toastNeedOne() {
-        Toast.makeText(this, "横式和竖式至少选一个", Toast.LENGTH_SHORT).show();
-    }
-
     // ---------- 生成 ----------
     private void onGenerate() {
-        int total = totalCount();
-        if (total == 0) return;
-        ensureStoragePermission(() -> {
-            if (total <= 20) {
-                new AlertDialog.Builder(this)
-                        .setTitle("一式两份")
-                        .setMessage("是否在纸张下半部分再生成一份相同题目？")
-                        .setPositiveButton("是", (d, w) -> doGenerate(true))
-                        .setNegativeButton("否", (d, w) -> doGenerate(false))
-                        .setCancelable(false)
-                        .show();
-            } else {
-                doGenerate(false);
-            }
-        });
+        if (totalCount() == 0) return;
+        ensureStoragePermission(this::doGenerate);
     }
 
-    private void doGenerate(boolean duplicate) {
+    private void doGenerate() {
         boolean randomize = hSelected && vSelected;
-        List<Question> qs = new QuestionGenerator().generate(counts, hSelected, vSelected, randomize);
-        if (qs.isEmpty()) {
+        List<PaperLayout.Section> sections =
+                new QuestionGenerator().buildSections(counts, hSelected, vSelected, randomize);
+        if (sections.isEmpty()) {
             Toast.makeText(this, "请至少选择一道题目", Toast.LENGTH_SHORT).show();
             return;
         }
-        File dir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "waxx");
-        String name = "数学题_" + new java.text.SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new java.util.Date()) + ".pdf";
+        File dir = new File(Environment.getExternalStoragePublicDirectory(
+                Environment.DIRECTORY_DOWNLOADS), "waxx");
+        String name = "数学题_" + new java.text.SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US)
+                .format(new java.util.Date()) + ".pdf";
         File out = new File(dir, name);
         try {
-            PdfExporter.Result res = PdfExporter.export(qs, duplicate, out);
+            PdfExporter.Result res = PdfExporter.export(sections, out);
             saveLastSelection(); // 记住本次打印配置，供“复制上次”恢复
             showResultDialog(res);
         } catch (Exception e) {
@@ -317,7 +275,8 @@ public class MainActivity extends android.app.Activity {
         final File file = res.file;
         new AlertDialog.Builder(this)
                 .setTitle("已生成")
-                .setMessage("共 " + res.total + " 题" + (res.duplicated ? "（一式两份）" : "")
+                .setMessage("共 " + res.total + " 题，共 " + res.pages + " 页"
+                        + "（题目 " + res.pages + " 页 + 答案 " + res.pages + " 页）"
                         + "\n已保存到：" + file.getAbsolutePath())
                 // 分享放最右侧（positive），更容易用右手点按
                 .setPositiveButton("分享文件", (d, w) -> sharePdf(file))
@@ -374,7 +333,7 @@ public class MainActivity extends android.app.Activity {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == REQ_STORAGE && grantResults.length > 0
                 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            if (pendingGenerate) { pendingGenerate = false; onGenerate(); }
+            if (pendingGenerate) { pendingGenerate = false; doGenerate(); }
         } else {
             Toast.makeText(this, "未获得存储权限，无法保存PDF", Toast.LENGTH_SHORT).show();
         }
@@ -386,7 +345,7 @@ public class MainActivity extends android.app.Activity {
         cleanupOldPdfs(); // 启动/回前台时清理，仅保留最新 3 个
         if (pendingGenerate && canWrite()) {
             pendingGenerate = false;
-            onGenerate();
+            doGenerate();
         }
     }
 
@@ -396,7 +355,8 @@ public class MainActivity extends android.app.Activity {
      */
     private void cleanupOldPdfs() {
         if (!canWrite()) return;
-        File dir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "waxx");
+        File dir = new File(Environment.getExternalStoragePublicDirectory(
+                Environment.DIRECTORY_DOWNLOADS), "waxx");
         File[] files = dir.listFiles();
         if (files == null) return;
         List<File> ours = new ArrayList<>();
