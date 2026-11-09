@@ -5,15 +5,15 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.MatrixCursor;
 import android.net.Uri;
+import android.os.Environment;
 import android.os.ParcelFileDescriptor;
 import android.provider.OpenableColumns;
-import android.webkit.MimeTypeMap;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 
 /**
- * 最小化 FileProvider：仅暴露 /sdcard/waxx 目录下的文件供系统分享，
+ * 最小化 FileProvider：仅暴露 Download/waxx 目录下的 PDF 供系统分享（兼容旧版 /sdcard/waxx）。
  * 不引入 AndroidX。
  */
 public class WaxxFileProvider extends ContentProvider {
@@ -26,16 +26,21 @@ public class WaxxFileProvider extends ContentProvider {
         return new Uri.Builder()
                 .scheme("content")
                 .authority(authority())
-                .encodedPath(file.getName())
+                .appendPath(file.getName())   // appendPath 会自动做百分号编码，中文名不会出错
                 .build();
     }
 
     private File resolve(Uri uri) throws FileNotFoundException {
         String name = uri.getLastPathSegment();
         if (name == null) throw new FileNotFoundException("bad uri");
-        File f = new File(android.os.Environment.getExternalStorageDirectory(), "waxx/" + name);
-        if (!f.exists()) throw new FileNotFoundException(f.getAbsolutePath());
-        return f;
+        // 当前版本保存在 Download/waxx；老版本在 /sdcard/waxx，做一次兼容
+        File current = new File(
+                new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "waxx"),
+                name);
+        if (current.exists()) return current;
+        File legacy = new File(new File(Environment.getExternalStorageDirectory(), "waxx"), name);
+        if (legacy.exists()) return legacy;
+        throw new FileNotFoundException(current.getAbsolutePath());
     }
 
     @Override

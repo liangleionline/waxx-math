@@ -286,12 +286,20 @@ public class MainActivity extends android.app.Activity {
 
     private void sharePdf(File file) {
         try {
+            if (!file.exists()) {
+                Toast.makeText(this, "文件已不存在，可能被自动清理了", Toast.LENGTH_SHORT).show();
+                return;
+            }
             Uri uri = WaxxFileProvider.uriFor(file);
             Intent i = new Intent(Intent.ACTION_SEND);
             i.setType("application/pdf");
             i.putExtra(Intent.EXTRA_STREAM, uri);
+            // ClipData + 授权标记：微信等接收方才能拿到读取权限
+            i.setClipData(android.content.ClipData.newRawUri(file.getName(), uri));
             i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            startActivity(Intent.createChooser(i, "分享 PDF"));
+            Intent chooser = Intent.createChooser(i, "分享 PDF");
+            chooser.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            startActivity(chooser);
         } catch (Exception e) {
             Toast.makeText(this, "分享失败：" + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
