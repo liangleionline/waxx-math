@@ -1,5 +1,11 @@
 # 数学出题器（Waxx Math）
 
+[![Latest Release](https://img.shields.io/github/v/release/liangleionline/waxx-math?label=%E6%9C%80%E6%96%B0%E7%89%88%E6%9C%AC&color=4C6FFF)](https://github.com/liangleionline/waxx-math/releases)
+[![Downloads](https://img.shields.io/github/downloads/liangleionline/waxx-math/total?label=%E7%B4%AF%E8%AE%A1%E4%B8%8B%E8%BD%BD&color=2EA043)](https://github.com/liangleionline/waxx-math/releases)
+[![Stars](https://img.shields.io/github/stars/liangleionline/waxx-math?label=Stars&color=FFB020)](https://github.com/liangleionline/waxx-math/stargazers)
+[![Last Commit](https://img.shields.io/github/last-commit/liangleionline/waxx-math?label=%E6%9C%80%E8%BF%91%E6%8F%90%E4%BA%A4)](https://github.com/liangleionline/waxx-math/commits)
+[![APK Size](https://img.shields.io/github/size/liangleionline/waxx-math/waxx-math-release.apk?label=APK)](https://github.com/liangleionline/waxx-math/releases)
+
 一款面向小学生家长的安卓数学出题工具：按**年级/学期**选题，批量生成**不重复**题目，自动排成**试卷式** A4 PDF（卷后附等页数的参考答案卷），保存到手机 `Download/waxx` 文件夹，可直接打印或分享到微信。
 
 ## 功能
