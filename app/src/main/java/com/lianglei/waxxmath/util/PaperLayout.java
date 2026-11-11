@@ -19,7 +19,7 @@ public class PaperLayout {
     /** 顶部表头区域（姓名/日期/用时/得分）高度 */
     public static final float HEADER_H = 62f;
     public static final float CONTENT_TOP = HEADER_H + 12f;
-    public static final float CONTENT_BOTTOM = PAGE_H - 32f;
+    public static final float CONTENT_BOTTOM = PAGE_H - 26f;
     public static final float CONTENT_H = CONTENT_BOTTOM - CONTENT_TOP;
 
     // 字号调大后行高同步放大，保证题与题之间留白、不挤成一团

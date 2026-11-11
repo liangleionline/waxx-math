@@ -12,7 +12,9 @@ import android.os.Environment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.LinearLayout;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -25,15 +27,18 @@ import com.lianglei.waxxmath.util.TopicCatalog;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 public class MainActivity extends android.app.Activity {
 
     private static final int REQ_STORAGE = 1001;
     private static final String PREFS = "last_print";
+    private static final String OPTS = "gen_options";
 
     private TextView chipGrade, chipHorizontal, chipVertical;
     private LinearLayout topicList;
@@ -47,6 +52,10 @@ public class MainActivity extends android.app.Activity {
 
     private final Map<TopicCatalog.Topic, Integer> counts = new LinkedHashMap<>();
     private boolean pendingGenerate = false;
+    // 待执行（等待存储权限）的生成参数
+    private int pendingCopies = 1;
+    private boolean pendingSame = false;
+    private boolean pendingAnswer = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -246,24 +255,95 @@ public class MainActivity extends android.app.Activity {
     // ---------- 生成 ----------
     private void onGenerate() {
         if (totalCount() == 0) return;
-        ensureStoragePermission(this::doGenerate);
+        showGenerateOptionsDialog();
+    }
+
+    /**
+     * 生成前的选项弹窗：几份、每份是否相同、是否带答案、是否记住本次选择。
+     * 勾选了「记住本次选择」后，下次打开会自动填充这些值。
+     */
+    private void showGenerateOptionsDialog() {
+        final SharedPreferences sp = getSharedPreferences(OPTS, MODE_PRIVATE);
+        boolean remember = sp.getBoolean("remember", false);
+        final int[] copies = {remember ? Math.max(1, sp.getInt("copies", 1)) : 1};
+        boolean same = remember && sp.getBoolean("same", false);
+        boolean answer = !remember || sp.getBoolean("answer", true);
+
+        View view = LayoutInflater.from(this).inflate(R.layout.dialog_generate, null);
+        final TextView tvCopies = view.findViewById(R.id.tvCopies);
+        final RadioGroup rgRepeat = view.findViewById(R.id.rgRepeat);
+        final CheckBox cbAnswer = view.findViewById(R.id.cbAnswer);
+        final CheckBox cbRemember = view.findViewById(R.id.cbRemember);
+
+        tvCopies.setText(String.valueOf(copies[0]));
+        rgRepeat.check(same ? R.id.rbSame : R.id.rbDistinct);
+        cbAnswer.setChecked(answer);
+        cbRemember.setChecked(remember);
+
+        view.findViewById(R.id.btnCopiesMinus).setOnClickListener(v -> {
+            copies[0] = Math.max(1, copies[0] - 1);
+            tvCopies.setText(String.valueOf(copies[0]));
+        });
+        view.findViewById(R.id.btnCopiesPlus).setOnClickListener(v -> {
+            copies[0] = Math.min(9, copies[0] + 1);
+            tvCopies.setText(String.valueOf(copies[0]));
+        });
+
+        new AlertDialog.Builder(this)
+                .setTitle("生成练习")
+                .setView(view)
+                .setPositiveButton("生成", (d, w) -> {
+                    int n = copies[0];
+                    boolean sameQ = rgRepeat.getCheckedRadioButtonId() == R.id.rbSame;
+                    boolean withAnswer = cbAnswer.isChecked();
+                    boolean rememberThis = cbRemember.isChecked();
+
+                    SharedPreferences.Editor e = sp.edit();
+                    if (rememberThis) {
+                        e.putBoolean("remember", true)
+                                .putInt("copies", n)
+                                .putBoolean("same", sameQ)
+                                .putBoolean("answer", withAnswer);
+                    } else {
+                        e.clear(); // 不再自动填充
+                    }
+                    e.apply();
+
+                    pendingCopies = n;
+                    pendingSame = sameQ;
+                    pendingAnswer = withAnswer;
+                    ensureStoragePermission(this::doGenerate);
+                })
+                .setNegativeButton("取消", null)
+                .show();
     }
 
     private void doGenerate() {
         boolean randomize = hSelected && vSelected;
-        List<PaperLayout.Section> sections =
-                new QuestionGenerator().buildSections(counts, hSelected, vSelected, randomize);
-        if (sections.isEmpty()) {
-            Toast.makeText(this, "请至少选择一道题目", Toast.LENGTH_SHORT).show();
-            return;
+        QuestionGenerator gen = new QuestionGenerator();
+
+        // 重复：只生成 1 套，导出 N 份；不重复：生成 N 套，共用去重集合避免跨份重题
+        int setCount = pendingSame ? 1 : pendingCopies;
+        Set<String> seen = new HashSet<>();
+        List<List<PaperLayout.Section>> sets = new ArrayList<>();
+        for (int i = 0; i < setCount; i++) {
+            List<PaperLayout.Section> sec =
+                    gen.buildSections(counts, hSelected, vSelected, randomize, seen);
+            if (sec.isEmpty()) {
+                Toast.makeText(this, "请至少选择一道题目", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            sets.add(sec);
         }
+
         File dir = new File(Environment.getExternalStoragePublicDirectory(
                 Environment.DIRECTORY_DOWNLOADS), "waxx");
         String name = "数学题_" + new java.text.SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US)
                 .format(new java.util.Date()) + ".pdf";
         File out = new File(dir, name);
         try {
-            PdfExporter.Result res = PdfExporter.export(sections, out);
+            PdfExporter.Result res =
+                    PdfExporter.export(sets, pendingCopies, pendingAnswer, out);
             saveLastSelection(); // 记住本次打印配置，供“复制上次”恢复
             showResultDialog(res);
         } catch (Exception e) {
@@ -273,11 +353,15 @@ public class MainActivity extends android.app.Activity {
 
     private void showResultDialog(PdfExporter.Result res) {
         final File file = res.file;
+        StringBuilder sb = new StringBuilder();
+        sb.append("共 ").append(res.sets).append(" 份，每份 ").append(res.perSet).append(" 题\n");
+        sb.append("题目 ").append(res.qPages).append(" 页");
+        if (res.aPages > 0) sb.append(" + 参考答案 ").append(res.aPages).append(" 页");
+        sb.append("，合计 ").append(res.totalPages()).append(" 页\n");
+        sb.append("已保存到：").append(file.getAbsolutePath());
         new AlertDialog.Builder(this)
                 .setTitle("已生成")
-                .setMessage("共 " + res.total + " 题，共 " + res.pages + " 页"
-                        + "（题目 " + res.pages + " 页 + 答案 " + res.pages + " 页）"
-                        + "\n已保存到：" + file.getAbsolutePath())
+                .setMessage(sb.toString())
                 // 分享放最右侧（positive），更容易用右手点按
                 .setPositiveButton("分享文件", (d, w) -> sharePdf(file))
                 .setNeutralButton("确定", null)

@@ -23,8 +23,17 @@ public class QuestionGenerator {
     public List<PaperLayout.Section> buildSections(Map<TopicCatalog.Topic, Integer> counts,
                                                    boolean useHorizontal, boolean useVertical,
                                                    boolean randomizeFormat) {
+        return buildSections(counts, useHorizontal, useVertical, randomizeFormat, new HashSet<String>());
+    }
+
+    /**
+     * 同上，但可传入共享的去重集合 —— 用于「生成多份且互不相同」时，
+     * 让不同份之间也不会出现同一道题。
+     */
+    public List<PaperLayout.Section> buildSections(Map<TopicCatalog.Topic, Integer> counts,
+                                                   boolean useHorizontal, boolean useVertical,
+                                                   boolean randomizeFormat, Set<String> seen) {
         List<PaperLayout.Section> sections = new ArrayList<>();
-        Set<String> seen = new HashSet<>();
 
         for (Map.Entry<TopicCatalog.Topic, Integer> e : counts.entrySet()) {
             int n = e.getValue();
