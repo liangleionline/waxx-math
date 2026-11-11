@@ -13,45 +13,58 @@ public class QuestionGenerator {
     private final Random random = new Random();
 
     /**
-     * @param counts            每个题型 -> 数量
-     * @param useHorizontal     是否允许横式
-     * @param useVertical       是否允许竖式
-     * @param randomizeFormat    两者都选时，逐题随机
+     * 按题型生成题目并分组为试卷分区（顺序与 counts 插入顺序一致）。
+     *
+     * @param counts          每个题型 -> 数量
+     * @param useHorizontal   是否允许横式
+     * @param useVertical     是否允许竖式
+     * @param randomizeFormat 两者都选时，逐题随机
      */
-    public List<Question> generate(Map<TopicCatalog.Topic, Integer> counts,
-                                  boolean useHorizontal, boolean useVertical,
-                                  boolean randomizeFormat) {
-        List<Question> out = new ArrayList<>();
-        Set<String> seen = new HashSet<>();
+    public List<PaperLayout.Section> buildSections(Map<TopicCatalog.Topic, Integer> counts,
+                                                   boolean useHorizontal, boolean useVertical,
+                                                   boolean randomizeFormat) {
+        return buildSections(counts, useHorizontal, useVertical, randomizeFormat, new HashSet<String>());
+    }
+
+    /**
+     * 同上，但可传入共享的去重集合 —— 用于「生成多份且互不相同」时，
+     * 让不同份之间也不会出现同一道题。
+     */
+    public List<PaperLayout.Section> buildSections(Map<TopicCatalog.Topic, Integer> counts,
+                                                   boolean useHorizontal, boolean useVertical,
+                                                   boolean randomizeFormat, Set<String> seen) {
+        List<PaperLayout.Section> sections = new ArrayList<>();
+
         for (Map.Entry<TopicCatalog.Topic, Integer> e : counts.entrySet()) {
             int n = e.getValue();
+            if (n <= 0) continue;
+            List<Question> list = new ArrayList<>();
             for (int i = 0; i < n; i++) {
                 Question q = unique(e.getKey(), seen);
-                if (q != null) out.add(q);
+                if (q != null) list.add(q);
             }
-        }
-        // 决定展示形式
-        for (Question q : out) {
-            boolean wantV;
-            if (!q.verticalSupported) {
-                wantV = false;
-            } else if (randomizeFormat) {
-                wantV = random.nextBoolean();
-            } else if (useVertical) {
-                wantV = true;
-            } else {
-                wantV = false;
+            if (list.isEmpty()) continue;
+
+            for (Question q : list) {
+                boolean wantV;
+                if (!q.verticalSupported) {
+                    wantV = false;
+                } else if (randomizeFormat) {
+                    wantV = random.nextBoolean();
+                } else {
+                    wantV = useVertical;
+                }
+                q.vertical = wantV;
             }
-            q.vertical = wantV;
+            sections.add(new PaperLayout.Section(e.getKey().title, e.getKey().kind, list));
         }
-        return out;
+        return sections;
     }
 
     private Question unique(TopicCatalog.Topic topic, Set<String> seen) {
         for (int i = 0; i < 5000; i++) {
             Question q = topic.gen.generate(random);
-            String k = q.expr;
-            if (seen.add(k)) return q;
+            if (seen.add(q.key())) return q;
         }
         return null;
     }

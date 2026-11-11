@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">数学出题器</string>
-    <string name="toast_over_40">题目总数不得超过40</string>
 </resources>
