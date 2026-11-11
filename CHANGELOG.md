@@ -2,6 +2,14 @@
 
 版本号规则：`versionCode` +1、`versionName` +0.1；每次发版保留线上最新 3 个 Release。
 
+## v2.4（versionCode 14）
+
+### 修复
+- 生成选项弹窗中「+」按钮为蓝底蓝字、几乎看不见，改为**白色加号**，与蓝色圆形底形成对比
+
+### 工程
+- `feature/paper-layout-v2` 分支代码正式合并回 `main`，合并后删除该特性分支
+
 ## v2.3（versionCode 13）
 
 ### 新增
