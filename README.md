@@ -13,8 +13,8 @@
 
 | | |
 |---|---|
-| 最新版 | [v2.1](https://github.com/liangleionline/waxx-math/releases/latest) |
-| 直链 | [waxx-math-release.apk](https://github.com/liangleionline/waxx-math/releases/download/v2.1/waxx-math-release.apk) |
+| 最新版 | [v2.2](https://github.com/liangleionline/waxx-math/releases/latest) |
+| 直链 | [waxx-math-release.apk](https://github.com/liangleionline/waxx-math/releases/download/v2.2/waxx-math-release.apk) |
 | 系统要求 | Android 6.0（API 23）及以上 |
 | 升级方式 | 同一签名，直接覆盖安装，无需卸载 |
 
@@ -38,7 +38,8 @@
 - **行内题数按题型**：横式 / 比大小 / 填括号一行 4 题；找规律一行 2 题。横式不预留写答案的位置，下一行紧贴。
 - **每页表头**：姓名 / 日期 / 用时 / 得分，并有分隔线。
 - **页脚页码**：第 x 页 / 共 n 页。
-- 题目过宽时自动缩小字号（最小 7pt），不会溢出纸面。
+- **大字号（v2.2）**：题目正文 15pt（原 11pt）、大题标题 16pt、竖式 15pt、表头 12pt，行高同步放大，纸面不挤，近距离阅读不伤视力。
+- 题目过宽时自动缩小字号（最小 9pt），不会溢出纸面。
 
 ### 参考答案卷
 - PDF 前半段是**题目卷**，后半段是**答案卷**；题目几页，答案就几页（1.5 页题目 → 题目 2 页 + 答案 2 页）。
@@ -66,8 +67,11 @@
 
 ## 版本记录
 
+> 完整历史与细节见 [CHANGELOG.md](CHANGELOG.md)。
+
 | 版本 | 主要变化 |
 |---|---|
+| **v2.2** | 全卷字号加大：正文 11→15pt、大题标题 16pt、表头 12pt，行高同步放大；版式与分页规则不变 |
 | **v2.1** | 修复分享到微信提示「获取资源失败」：Provider 改为按 `Download/waxx` 解析、补 `ClipData` 读权限授权、中文文件名 URI 编码修正 |
 | **v2.0** | 大改版：试卷式分区排版（分大题、一张纸一张卷）、取消 40 题上限与「一式两份」、取消数量手动输入（仅 ± 步进）、PDF 增加等页数参考答案卷、每页姓名 / 日期 / 用时 / 得分表头、一年级新增比大小 / 填括号 / 找规律 |
 | v1.8 | PDF 改存 `Download/waxx`，启动时仅保留最新 3 个文件 |

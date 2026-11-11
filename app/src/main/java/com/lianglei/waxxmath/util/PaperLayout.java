@@ -17,15 +17,16 @@ public class PaperLayout {
     public static final float CONTENT_W = PAGE_W - MARGIN_L - MARGIN_R;
 
     /** 顶部表头区域（姓名/日期/用时/得分）高度 */
-    public static final float HEADER_H = 58f;
-    public static final float CONTENT_TOP = HEADER_H + 10f;
-    public static final float CONTENT_BOTTOM = PAGE_H - 30f;
+    public static final float HEADER_H = 62f;
+    public static final float CONTENT_TOP = HEADER_H + 12f;
+    public static final float CONTENT_BOTTOM = PAGE_H - 32f;
     public static final float CONTENT_H = CONTENT_BOTTOM - CONTENT_TOP;
 
-    public static final float TITLE_H = 24f;      // 大题标题行高
-    public static final float ROW_TEXT_H = 30f;   // 横式/比大小/填括号行高
-    public static final float ROW_VERT_H = 58f;   // 竖式行高（含答案位置）
-    public static final float ROW_PATTERN_H = 34f;// 找规律行高
+    // 字号调大后行高同步放大，保证题与题之间留白、不挤成一团
+    public static final float TITLE_H = 32f;      // 大题标题行高
+    public static final float ROW_TEXT_H = 42f;   // 横式/比大小/填括号行高
+    public static final float ROW_VERT_H = 76f;   // 竖式行高（含答案位置）
+    public static final float ROW_PATTERN_H = 46f;// 找规律行高
 
     private static final String[] CN_NUM = {
             "一", "二", "三", "四", "五", "六", "七", "八", "九", "十",

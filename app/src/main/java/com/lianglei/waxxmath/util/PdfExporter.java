@@ -24,6 +24,17 @@ public class PdfExporter {
     private static final float CONTENT_TOP = PaperLayout.CONTENT_TOP;
     private static final int ANSWER_RED = 0xFFC62828;
 
+    /** 正文字号（题目），加大到接近课本作业本的字号，便于孩子阅读 */
+    private static final float SIZE_BODY = 15f;
+    /** 自动缩字时允许的最小字号 */
+    private static final float SIZE_MIN = 9f;
+    /** 大题标题字号 */
+    private static final float SIZE_TITLE = 16f;
+    /** 表头字号 */
+    private static final float SIZE_HEADER = 12f;
+    /** 页脚字号 */
+    private static final float SIZE_FOOTER = 10f;
+
     public static final class Result {
         public final File file;
         public final int total;
@@ -73,12 +84,12 @@ public class PdfExporter {
         Paint text = new Paint(Paint.ANTI_ALIAS_FLAG);
         text.setColor(Color.BLACK);
         text.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
-        text.setTextSize(11f);
+        text.setTextSize(SIZE_BODY);
 
         Paint ans = new Paint(Paint.ANTI_ALIAS_FLAG);
         ans.setColor(ANSWER_RED);
         ans.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
-        ans.setTextSize(11f);
+        ans.setTextSize(SIZE_BODY);
 
         Paint thin = new Paint(Paint.ANTI_ALIAS_FLAG);
         thin.setColor(Color.parseColor("#A9B2C0"));
@@ -91,9 +102,9 @@ public class PdfExporter {
         for (PaperLayout.Row row : data.rows) {
             if (row.isTitle()) {
                 // 编号已在排版阶段固定，保证跨页连续
-                text.setTextSize(11.5f);
-                canvas.drawText(row.title, MARGIN_L, y + 16f, text);
-                text.setTextSize(11f);
+                text.setTextSize(SIZE_TITLE);
+                canvas.drawText(row.title, MARGIN_L, y + 21f, text);
+                text.setTextSize(SIZE_BODY);
             } else {
                 float rowTop = y + 2f;
                 float colW = CONTENT_W / row.cols;
@@ -103,8 +114,8 @@ public class PdfExporter {
                     if (q.vertical) {
                         drawVertical(canvas, q, left, rowTop, colW, row.height, text, ans, answer);
                     } else {
-                        float baseline = rowTop + row.height * 0.70f;
-                        drawInline(canvas, q, left + 6f, baseline, colW - 12f, text, ans, answer);
+                        float baseline = rowTop + row.height * 0.68f;
+                        drawInline(canvas, q, left + 4f, baseline, colW - 8f, text, ans, answer);
                     }
                 }
             }
@@ -115,31 +126,31 @@ public class PdfExporter {
     }
 
     private static void drawHeader(Canvas canvas, Paint text, Paint thin, boolean answer) {
-        text.setTextSize(10f);
-        canvas.drawText("姓名：____________    日期：____________    用时：__________    得分：__________",
-                MARGIN_L, 34f, text);
-        text.setTextSize(9f);
+        text.setTextSize(SIZE_HEADER);
+        canvas.drawText("姓名：__________    日期：__________    用时：________    得分：________",
+                MARGIN_L, 36f, text);
+        text.setTextSize(SIZE_HEADER - 0.5f);
         if (answer) {
             Paint red = new Paint(Paint.ANTI_ALIAS_FLAG);
             red.setColor(ANSWER_RED);
             red.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
-            red.setTextSize(9.5f);
+            red.setTextSize(SIZE_HEADER - 1f);
             String tag = "（参考答案）";
             float w = red.measureText(tag);
-            canvas.drawText(tag, PAGE_W - MARGIN_R - w, 34f, red);
+            canvas.drawText(tag, PAGE_W - MARGIN_R - w, 36f, red);
         }
-        canvas.drawLine(MARGIN_L, 45f, PAGE_W - MARGIN_R, 45f, thin);
-        text.setTextSize(11f);
+        canvas.drawLine(MARGIN_L, 50f, PAGE_W - MARGIN_R, 50f, thin);
+        text.setTextSize(SIZE_BODY);
     }
 
     private static void drawFooter(Canvas canvas, Paint text, int pageNo, int totalPages,
                                    boolean answer) {
-        text.setTextSize(9f);
+        text.setTextSize(SIZE_FOOTER);
         String s = (answer ? "参考答案 · " : "")
                 + "第 " + pageNo + " 页 / 共 " + totalPages + " 页";
         float w = text.measureText(s);
-        canvas.drawText(s, (PAGE_W - w) / 2f, PAGE_H - 12f, text);
-        text.setTextSize(11f);
+        canvas.drawText(s, (PAGE_W - w) / 2f, PAGE_H - 14f, text);
+        text.setTextSize(SIZE_BODY);
     }
 
     /** 横式题目：prefix + 占位/答案 + suffix */
@@ -149,11 +160,11 @@ public class PdfExporter {
         String mid = answer ? q.answer : q.placeholder;
         String suf = q.suffix;
 
-        float size = 11f;
+        float size = SIZE_BODY;
         text.setTextSize(size);
         float w = text.measureText(pre) + text.measureText(mid) + text.measureText(suf);
         if (w > maxW && w > 0) {
-            size = Math.max(7f, size * maxW / w);
+            size = Math.max(SIZE_MIN, size * maxW / w);
             text.setTextSize(size);
             ans.setTextSize(size);
         }
@@ -168,8 +179,8 @@ public class PdfExporter {
         float x3 = x2 + text.measureText(mid);
         canvas.drawText(suf, x3, baseline, text);
 
-        text.setTextSize(11f);
-        ans.setTextSize(11f);
+        text.setTextSize(SIZE_BODY);
+        ans.setTextSize(SIZE_BODY);
     }
 
     /** 竖式题目 */
@@ -180,7 +191,7 @@ public class PdfExporter {
         String b = q.vBottom;
         if (a == null || b == null) return;
 
-        float size = 10f;
+        float size = SIZE_BODY;
         text.setTextSize(size);
         ans.setTextSize(size);
         float aw = text.measureText(a);
@@ -189,9 +200,9 @@ public class PdfExporter {
         float cx = left + colW / 2f;
         float rightX = cx + w / 2f;
 
-        float topBase = top + rowH * 0.32f;
-        float botBase = top + rowH * 0.32f + text.getFontSpacing();
-        float ruleY = botBase + 5f;
+        float topBase = top + rowH * 0.26f;
+        float botBase = topBase + text.getFontSpacing();
+        float ruleY = botBase + 6f;
 
         canvas.drawText(a, rightX - aw, topBase, text);
         canvas.drawText(b, rightX - bw, botBase, text);
@@ -199,10 +210,10 @@ public class PdfExporter {
 
         if (answer) {
             float ansW = ans.measureText(q.answer);
-            canvas.drawText(q.answer, rightX - ansW, ruleY + 16f, ans);
+            canvas.drawText(q.answer, rightX - ansW, ruleY + 20f, ans);
         }
 
-        text.setTextSize(11f);
-        ans.setTextSize(11f);
+        text.setTextSize(SIZE_BODY);
+        ans.setTextSize(SIZE_BODY);
     }
 }
