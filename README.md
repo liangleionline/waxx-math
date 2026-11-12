@@ -13,8 +13,8 @@
 
 | | |
 |---|---|
-| 最新版 | [v2.4](https://github.com/liangleionline/waxx-math/releases/latest) |
-| 直链 | [waxx-math-release.apk](https://github.com/liangleionline/waxx-math/releases/download/v2.4/waxx-math-release.apk) |
+| 最新版 | [v2.5](https://github.com/liangleionline/waxx-math/releases/latest) |
+| 直链 | [waxx-math-release.apk](https://github.com/liangleionline/waxx-math/releases/download/v2.5/waxx-math-release.apk) |
 | 系统要求 | Android 6.0（API 23）及以上 |
 | 升级方式 | 同一签名，直接覆盖安装，无需卸载 |
 
@@ -36,7 +36,7 @@
 ### 生成前选项（v2.3）
 点「生成练习」先弹出选项框，确认后才出 PDF：
 - **几份题**：1~9 份，每份页眉标注「第 x 份 / 共 N 份」
-- **多份是否相同**：各不相同（跨份也不重复出题）／完全相同（同一套题印 N 份）
+- **多份是否相同**：各不相同（每份重新出题）／完全相同（同一套题印 N 份）；无论哪种，**只保证每份内部不重复**，份与份之间允许出现相同题目
 - **是否附带参考答案**：答案统一放在整份 PDF 的**最后**，不跟随每份题目；多份相同时答案只印一份
 - **记住本次选择**：勾选后下次打开自动填充以上选项
 
@@ -80,6 +80,7 @@
 
 | 版本 | 主要变化 |
 |---|---|
+| **v2.5** | 去重范围改为只在每份内部生效，多份之间不再强制不重复（题量较少时不会再出现凑不够题的情况） |
 | **v2.4** | 修复生成选项弹窗里蓝色加号看不清的问题（加号改为白色）；代码合并回 main 主分支 |
 | **v2.3** | 生成前选项弹窗（份数 / 是否相同 / 是否带答案 / 记住选择）；多份卷眉标注「第 x 份 / 共 N 份」；答案统一放最后且与卷号对应；去掉页脚页码 |
 | **v2.2** | 全卷字号加大：正文 11→15pt、大题标题 16pt、表头 12pt，行高同步放大；版式与分页规则不变 |

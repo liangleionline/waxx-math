@@ -27,12 +27,10 @@ import com.lianglei.waxxmath.util.TopicCatalog;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 
 public class MainActivity extends android.app.Activity {
 
@@ -322,13 +320,13 @@ public class MainActivity extends android.app.Activity {
         boolean randomize = hSelected && vSelected;
         QuestionGenerator gen = new QuestionGenerator();
 
-        // 重复：只生成 1 套，导出 N 份；不重复：生成 N 套，共用去重集合避免跨份重题
+        // 重复：只生成 1 套，导出 N 份；不重复：生成 N 套。
+        // 去重只在每份内部生效，不同份之间允许出现相同题目。
         int setCount = pendingSame ? 1 : pendingCopies;
-        Set<String> seen = new HashSet<>();
         List<List<PaperLayout.Section>> sets = new ArrayList<>();
         for (int i = 0; i < setCount; i++) {
             List<PaperLayout.Section> sec =
-                    gen.buildSections(counts, hSelected, vSelected, randomize, seen);
+                    gen.buildSections(counts, hSelected, vSelected, randomize);
             if (sec.isEmpty()) {
                 Toast.makeText(this, "请至少选择一道题目", Toast.LENGTH_SHORT).show();
                 return;
